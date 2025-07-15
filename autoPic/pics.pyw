@@ -1,27 +1,21 @@
-from PyQt6.QtWidgets import (QFileDialog, QApplication, QPushButton, 
-                             QLabel, QProgressBar, QWidget, QLineEdit)
+from PyQt6.QtWidgets import (QFileDialog, QApplication, QPushButton, QLabel, QProgressBar, QWidget, QLineEdit)
 from PyQt6.QtGui import QPixmap
 from sys import exit, argv
-from moviepy.editor import VideoFileClip
 from json import load
 import ffmpeg
-
-import time
-import datetime
 import threading
-import multiprocessing
 
-settings_file_path = "C:/Users/jurko/Projects/Sky_Diving_Video_Project/autoPic/defult_settings.json"
+APP_PATH = 'C:\\Users\jurko\Projects\Video Editor\\autoPic\\' # There has to be a better way
 
 class ExampleWidget(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.time_between_pics = 0.5
-        self.start_time = 0
+        self.time_between_pics = 1
+        self.start_time = 35
         self.end_time = ''
         
-        with open(settings_file_path, "r") as f:
+        with open(APP_PATH+"defult_settings.json", "r") as f: # you shouldn't have to edit a json
             dic = load(f)
             self.inPath = dic['input']
             self.outPath = dic['output']
@@ -47,19 +41,19 @@ class ExampleWidget(QWidget):
         ql = QLabel('Time Between:', self)
         ql.move(20, 100)
         qle.setGeometry(110,98,40,20)
-        qle.textChanged[str].connect(self.onChanged)
+        qle.textChanged[str].connect(self.onTimeBetweenChanged)
 
         qle2 = QLineEdit(str(self.start_time), self)
         ql2 = QLabel('Start Time:', self)
         ql2.move(170, 100)
         qle2.setGeometry(230,98,50,20)
-        qle2.textChanged[str].connect(self.onChanged2)
+        qle2.textChanged[str].connect(self.onStartTimeChanged)
 
         qle3 = QLineEdit(str(self.end_time), self)
         ql3 = QLabel('End Time:', self)
         ql3.move(300, 100)
         qle3.setGeometry(360,98,60,20)
-        qle3.textChanged[str].connect(self.onChanged3)
+        qle3.textChanged[str].connect(self.onEndTimeChanged)
 
         self.btn_pic = QPushButton('Take Pictures', self)
         self.btn_pic.move(20, 150)
@@ -69,7 +63,7 @@ class ExampleWidget(QWidget):
         self.pbar.setGeometry(100, 150, 200, 40)
         self.pbar.hide()
 
-        pixmap = QPixmap('small_frog.png')
+        pixmap = QPixmap(APP_PATH+'small_frog.png')
         lbl = QLabel(self)
         lbl.setPixmap(pixmap)
         lbl.move(450,100)
@@ -78,15 +72,15 @@ class ExampleWidget(QWidget):
         self.setWindowTitle('Auto Pic')
         self.show()
 
-    def onChanged(self, num):
+    def onTimeBetweenChanged(self, num):
         self.time_between_pics = num
 
-    def onChanged2(self, num):
+    def onStartTimeChanged(self, num):
         if self.start_time == '' or self.start_time < 0:
             self.start_time = 0
         self.start_time = num
 
-    def onChanged3(self, num):
+    def onEndTimeChanged(self, num):
         self.end_time = num
 
     def inFunct(self):
@@ -102,36 +96,6 @@ class ExampleWidget(QWidget):
         if fname:
             self.outPath = fname
             self.la_out.setText(str(self.outPath))
-
-    def takePictures4xSLOWER(self):
-        if self.inPath != None:
-            start = time.time()
-            
-            clip = VideoFileClip(self.inPath)
-            self.start_time = int(self.start_time)
-            self.end_time = int(self.end_time)
-            
-            if self.end_time == -1 or self.end_time > clip.duration:
-                self.end_time = clip.duration
-                
-            interval_length = self.end_time - self.start_time
-            self.pbar.show()
-            
-            curentTime = self.start_time
-            i = 1
-            while curentTime < self.end_time:
-                self.pbar.setValue(int(100 * (curentTime - self.start_time) / interval_length))
-                clip.save_frame(f"{self.outPath}/\pic_{i}.jpeg", curentTime)
-                curentTime += float(self.time_between_pics)
-                i += 1
-                
-            self.pbar.setValue(0)
-            self.pbar.hide()
-            
-            time_elapsed = time.time() - start
-            form = datetime.timedelta(seconds=time_elapsed)
-            print('The Program Took: ', form)
-            print(clip.duration/time_elapsed)
     
     def makePicThread(self):
         t1 = threading.Thread(target=self.takePictures)
@@ -156,10 +120,9 @@ class ExampleWidget(QWidget):
             except ffmpeg._run.Error as e:
                 print(e)
 
-def main():
+
+# "C:\\Users\\jurko\\Projects\\Video Editor\\Real2\\GX010709.mp4"
+if __name__ == '__main__':
     app = QApplication(argv)
     t = ExampleWidget()
     exit(app.exec())
-
-if __name__ == '__main__':
-    main()
