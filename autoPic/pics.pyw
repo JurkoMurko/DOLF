@@ -11,14 +11,14 @@ import datetime
 import threading
 import multiprocessing
 
-settings_file_path = "C:/Users/jurko/Projects/Sky_Diving_Video_Project/autoPic/defult_settings.json"
+settings_file_path = "C:\\Users\jurko\Projects\Video Editor\\autoPic\defult_settings.json"
 
 class ExampleWidget(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.time_between_pics = 0.5
-        self.start_time = 0
+        self.time_between_pics = 1
+        self.start_time = 35
         self.end_time = ''
         
         with open(settings_file_path, "r") as f:
@@ -148,6 +148,7 @@ class ExampleWidget(QWidget):
                 self.end_time = duration + int(self.end_time)
                         
             vid = ffmpeg.input(self.inPath, ss=int(self.start_time), to=self.end_time)
+            vid = ffmpeg.filter(vid, 'scale', '1920x1080')
             vid = ffmpeg.filter(vid, 'fps', 1/float(self.time_between_pics))
             out = ffmpeg.output(vid, f'{self.outPath}/%03d.jpeg')
             out = out.global_args('-hide_banner')
