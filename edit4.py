@@ -5,8 +5,10 @@ start = time.time()
 
 import ffmpeg
 
-project_path = 'C:\\Users\\jurko\\Documents\\Sky_Diving_Video_Project'
+project_path = 'C:/Users/jurko/Projects/Sky_Diving_Video_Project'
 video_folder_path = 'Real2'
+
+output_file_path_and_name = 'out\\fix.mp4'
 
 ttime = 0.5 # Transition Time
 
@@ -35,7 +37,7 @@ class Vids():
         else:
             self.end = end
         
-        self.path = f'{project_path}\\{video_folder_path}\\{path}'
+        self.path = f'{project_path}/{video_folder_path}/{path}'
         
         self.duration = self.end - self.start
         self.tstamp = self.duration + previous_end_tstamp - ttime
@@ -54,7 +56,7 @@ info = (
     ('GX010709.MP4', 198, 215), # keruje
     ('GX010709.MP4', 60*4+37, 5*60+27) # landing
 )
-highlight_list = [(3,2,6),(4,4,8),(6,1,5),(7,0,4), (7,34,38)]
+highlight_list = [(3,2,6),(4,4,8),(6,1,5),(7,0,4), (7,34,38)] # (video index, start time, end time)
 
 total_length = 27
 for i in info:
@@ -83,6 +85,12 @@ for i in range(len(talking_video_index)):
 
     delayed_audio = ffmpeg.filter(delayed_audio, 'aresample', 44100)
     music = ffmpeg.filter([delayed_audio, music], 'amix', inputs=2)
+
+# test at using origional clips for speed up
+# for i in range(len(vids)):
+#     vids[i] = ffmpeg.filter(vids[i], 'fps', 30)
+#     vids[i] = ffmpeg.filter(vids[i], 'scale', '1920x1080')
+#     vids[i] = ffmpeg.filter(vids[i], 'setsar', '1')
 
 # Highlight Clips 
 clip_list = []
@@ -135,7 +143,7 @@ vid = ffmpeg.filter([
             )
 
 # Output & Run
-out = ffmpeg.output(vid, 'out\\fix.mp4')
+out = ffmpeg.output(vid, output_file_path_and_name)
 out = out.global_args('-hide_banner')
 print(out.get_args())
 ffmpeg.run(out, overwrite_output=True)
