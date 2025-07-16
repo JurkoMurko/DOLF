@@ -2,7 +2,6 @@ from PyQt6.QtWidgets import (QFileDialog, QApplication, QPushButton, QLabel, QPr
 from PyQt6.QtGui import QPixmap
 from sys import exit, argv
 from json import load
-import ffmpeg
 import threading
 import cv2
 import os
@@ -87,7 +86,9 @@ class ExampleWidget(QWidget):
     def takePictures(self):
         if self.inPath != None:
             self.qlp.show()
-            duration = float(ffmpeg.probe(self.inPath)["format"]["duration"])
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            duration = frame_count/fps
 
             if self.end_time == '' or int(self.end_time) > duration or int(self.end_time)*-1 > duration:
                 self.end_time = duration
@@ -103,7 +104,7 @@ class ExampleWidget(QWidget):
             picFolderPath = os.path.join(os.path.dirname(self.inPath), self.outFolderName)
             os.makedirs(picFolderPath, exist_ok=True)
             
-            fps = cap.get(cv2.CAP_PROP_FPS)
+            
             start_frame = round(fps * self.start_time)
             stop_frame = round(fps * self.end_time)
             step_frame = round(fps * self.time_between_pics)

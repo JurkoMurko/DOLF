@@ -1,15 +1,4 @@
 .vscode
-Assets/
-dist/
-New_Vids3/
-OG_Clips/
-out/
-pics/
-Real/
-Real2/
-run.bat
+old/*
 test.py
-todo.md
-pyqt_opencv.py
-edit2.py
-highlevel.md
+md files/*
