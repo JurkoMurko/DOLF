@@ -4,6 +4,8 @@ from sys import exit, argv
 from json import load
 import ffmpeg
 import threading
+import cv2
+import os
 
 APP_PATH = 'C:\\Users\jurko\Projects\Video Editor\\autoPic\\' # There has to be a better way
 
@@ -98,7 +100,7 @@ class ExampleWidget(QWidget):
             self.la_out.setText(str(self.outPath))
     
     def makePicThread(self):
-        t1 = threading.Thread(target=self.takePictures)
+        t1 = threading.Thread(target=self.takePicturesCV2)
         t1.start()
         
     def takePictures(self):
@@ -120,8 +122,34 @@ class ExampleWidget(QWidget):
             except ffmpeg._run.Error as e:
                 print(e)
 
+    def takePicturesCV2(self):
+        if self.inPath != None:       
+            duration = float(ffmpeg.probe(self.inPath)["format"]["duration"])
 
-# "C:\\Users\\jurko\\Projects\\Video Editor\\Real2\\GX010709.mp4"
+            if self.end_time == '' or int(self.end_time) > duration or int(self.end_time)*-1 > duration:
+                self.end_time = duration
+            
+            if int(self.end_time) <= 0:
+                self.end_time = duration + int(self.end_time)
+                
+            cap = cv2.VideoCapture(self.inPath)
+
+            if not cap.isOpened():
+                raise Exception('HELP! cv2 input video file issue')
+
+            # os.makedirs(os.path.join(self.outPath, 'fotky'), exist_ok=True)
+            
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            start_frame = round(fps * self.start_time)
+            stop_frame = round(fps * self.end_time)
+            step_frame = round(fps * self.time_between_pics)
+
+            for n in range(start_frame, stop_frame, step_frame):
+                cap.set(cv2.CAP_PROP_POS_FRAMES, n)
+                ret, frame = cap.read()
+                cv2.imwrite(f'{self.outPath}/{n}.jpeg', frame)
+            
+                
 if __name__ == '__main__':
     app = QApplication(argv)
     t = ExampleWidget()
