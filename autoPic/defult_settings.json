@@ -1,6 +1,6 @@
 {
     "input" : "C:\\Users\\",
-    "output" : "C:\\Users\\",
     "start time" : 18.48,
-    "end time" : -14.53
+    "end time" : -14.53,
+    "defult picture folder name" : "fotky"
 }
