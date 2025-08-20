@@ -1,10 +1,11 @@
 from PyQt6.QtWidgets import (QFileDialog, QApplication, QPushButton, QLabel, QProgressBar, QWidget, QLineEdit)
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QIcon
 from sys import exit, argv
 from json import load
 import threading
 import cv2
 import os
+import ctypes
 
 APP_PATH = 'C:\\Users\jurko\Projects\Video Editor\\autoPic\\' # There has to be a better way
 
@@ -12,6 +13,9 @@ class ExampleWidget(QWidget):
     def __init__(self):
         super().__init__()
 
+        myappid = 'DOLF.automatic_pictures.v5' # arbitrary string
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    
         self.time_between_pics = 1
         self.start_time = 35
         self.end_time = ''
@@ -59,6 +63,7 @@ class ExampleWidget(QWidget):
 
         self.setGeometry(300, 300, 550, 200)
         self.setWindowTitle('Auto Pic')
+        self.setWindowIcon(QIcon(APP_PATH+"Icon-Cute-Dolphin.ico"))
         self.show()
  
     def onTimeBetweenChanged(self, num):
