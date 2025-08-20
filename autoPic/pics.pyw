@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (QFileDialog, QApplication, QPushButton, QLabel, QProgressBar, QWidget, QLineEdit)
 from PyQt6.QtGui import QPixmap, QIcon
 from sys import exit, argv
-from json import load
+from json import dump, load
 import threading
 import cv2
 import os
@@ -14,14 +14,15 @@ class ExampleWidget(QWidget):
         super().__init__()
 
         myappid = 'DOLF.automatic_pictures.v5' # arbitrary string
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid) # sets Windows task bar icon
     
         self.time_between_pics = 1
         self.start_time = 35
         self.end_time = ''
         
-        with open(APP_PATH+"defult_settings.json", "r") as f: # you shouldn't have to edit a json
+        with open(APP_PATH+"app_settings.json", "r") as f: # you shouldn't have to edit a json
             dic = load(f)
+            self.inPath = dic['input']
             self.inPath = dic['input']
             self.start_time = dic['start time']
             self.end_time = dic['end time']
@@ -75,18 +76,21 @@ class ExampleWidget(QWidget):
         self.start_time = int(num)
 
     def btn_select_input_file(self):
+        if self.inPath == '':
+            self.inPath = os.path.expanduser('~') + '/Desktop' # opens file dialog at current home path + desktop
         fname = QFileDialog.getOpenFileName(self, 'Open file', self.inPath)
-        
-        if fname[0]:
+        if fname[0]: # so if you cancel the dialog code doesn't run
             self.inPath = fname[0]
             self.la_in.setText(str(self.inPath))
+
+            # saving file path selection for next opening of file dialog
+            with open(APP_PATH+"app_settings.json", "r") as f:
+                dic = load(f)
             
-        # with open(APP_PATH+"defult_settings.json", "w") as f: # you shouldn't have to edit a json
-        #     dic = load(f)
-        #     self.inPath = dic['input']
-        #     self.start_time = dic['start time']
-        #     self.end_time = dic['end time']
-        #     self.outFolderName = dic['defult picture folder name']
+            dic['input'] = self.inPath
+                
+            with open(APP_PATH+'app_settings.json', 'w') as f:
+                dump(dic, f, indent=4)
     
     def btn_take_pics(self): # This is for the gui to stay responsive not a speed optimization
         t1 = threading.Thread(target=self.takePictures)
