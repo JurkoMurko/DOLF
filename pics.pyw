@@ -4,7 +4,7 @@ from sys import exit, argv
 from json import dump, load
 import threading, cv2, os, ctypes, traceback, sys
 
-APP_PATH = 'C:\\Users\jurko\Projects\Video Editor\\autoPic\\' # There has to be a better way
+APP_PATH = os.path.dirname(os.path.realpath(__file__)) + '/'
 
 class ErrorDialog(QDialog):
     def __init__(self):
@@ -16,14 +16,14 @@ class ErrorDialog(QDialog):
         self.qlp = QLabel('Error:', self)
         self.qlp.move(100, 150)
 
-        pixmap = QPixmap(APP_PATH+'small_frog.png')
+        pixmap = QPixmap(APP_PATH+'assets/frog.png')
         lbl = QLabel(self)
         lbl.setPixmap(pixmap)
         lbl.move(450,100)
 
         self.setGeometry(350, 350, 200, 200)
         self.setWindowTitle('Error')
-        self.setWindowIcon(QIcon(APP_PATH+"Icon-Cute-Dolphin.ico"))
+        self.setWindowIcon(QIcon(APP_PATH+"assets/dolphin.ico"))
         self.show()
 
 class MainWindow(QWidget):
@@ -74,14 +74,14 @@ class MainWindow(QWidget):
         self.qlp.move(100, 150)
         self.qlp.hide()
 
-        self.pixmap = QPixmap(APP_PATH+'small_frog.png')
+        self.pixmap = QPixmap(APP_PATH+'assets/frog.png')
         self.lbl = QLabel(self)
         self.lbl.setPixmap(self.pixmap)
         self.lbl.move(450,100)
 
         self.setGeometry(300, 300, 550, 200)
         self.setWindowTitle('Auto Pic')
-        self.setWindowIcon(QIcon(APP_PATH+"Icon-Cute-Dolphin.ico"))
+        self.setWindowIcon(QIcon(APP_PATH+"assets/dolphin.ico"))
         self.show()
  
     def onTimeBetweenChanged(self, num):
