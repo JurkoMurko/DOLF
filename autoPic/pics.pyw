@@ -1,20 +1,37 @@
-from PyQt6.QtWidgets import (QFileDialog, QApplication, QPushButton, QLabel, QProgressBar, QWidget, QLineEdit)
+from PyQt6.QtWidgets import (QFileDialog, QDialog,QApplication, QPushButton, QLabel, QWidget, QLineEdit, QMessageBox)
 from PyQt6.QtGui import QPixmap, QIcon
 from sys import exit, argv
 from json import dump, load
-import threading
-import cv2
-import os
-import ctypes
+import threading, cv2, os, ctypes, traceback, sys
 
 APP_PATH = 'C:\\Users\jurko\Projects\Video Editor\\autoPic\\' # There has to be a better way
 
-class ExampleWidget(QWidget):
+class ErrorDialog(QDialog):
     def __init__(self):
         super().__init__()
+        
+        self.initUI()
+        
+    def initUI(self):
+        self.qlp = QLabel('Error:', self)
+        self.qlp.move(100, 150)
 
-        myappid = 'DOLF.automatic_pictures.v5' # arbitrary string
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid) # sets Windows task bar icon
+        pixmap = QPixmap(APP_PATH+'small_frog.png')
+        lbl = QLabel(self)
+        lbl.setPixmap(pixmap)
+        lbl.move(450,100)
+
+        self.setGeometry(350, 350, 200, 200)
+        self.setWindowTitle('Error')
+        self.setWindowIcon(QIcon(APP_PATH+"Icon-Cute-Dolphin.ico"))
+        self.show()
+
+class MainWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        
+        sys.excepthook = self.custom_excepthook # Assign the custom function to sys.excepthook
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('DOLF.automatic_pictures.v5') # sets Windows task bar icon
     
         self.time_between_pics = 1
         self.start_time = 35
@@ -37,30 +54,30 @@ class ExampleWidget(QWidget):
         self.la_in = QLabel(self.inPath + ' '*100, self)
         self.la_in.move(100, 22)
 
-        qle = QLineEdit(str(self.time_between_pics), self)
-        ql = QLabel('Time Between:', self)
-        ql.move(20, 100)
-        qle.setGeometry(110,98,40,20)
-        qle.textChanged[str].connect(self.onTimeBetweenChanged)
+        self.qle = QLineEdit(str(self.time_between_pics), self)
+        self.ql = QLabel('Time Between:', self)
+        self.ql.move(20, 100)
+        self.qle.setGeometry(110,98,40,20)
+        self.qle.textChanged[str].connect(self.onTimeBetweenChanged)
 
-        qle2 = QLineEdit(str(self.start_time), self)
-        ql2 = QLabel('Start Time:', self)
-        ql2.move(170, 100)
-        qle2.setGeometry(230,98,50,20)
-        qle2.textChanged[str].connect(self.onStartTimeChanged)
+        self.qle2 = QLineEdit(str(self.start_time), self)
+        self.ql2 = QLabel('Start Time:', self)
+        self.ql2.move(170, 100)
+        self.qle2.setGeometry(230,98,50,20)
+        self.qle2.textChanged[str].connect(self.onStartTimeChanged)
 
         self.btn_pic = QPushButton('Take Pictures', self)
         self.btn_pic.move(20, 150)
-        self.btn_pic.clicked.connect(self.btn_take_pics) #(self.btn_take_pics) # lambda function could be cleaner
+        self.btn_pic.clicked.connect(self.mk_pic_thread) # lambda function mb
  
         self.qlp = QLabel('progress:', self)
         self.qlp.move(100, 150)
         self.qlp.hide()
 
-        pixmap = QPixmap(APP_PATH+'small_frog.png')
-        lbl = QLabel(self)
-        lbl.setPixmap(pixmap)
-        lbl.move(450,100)
+        self.pixmap = QPixmap(APP_PATH+'small_frog.png')
+        self.lbl = QLabel(self)
+        self.lbl.setPixmap(self.pixmap)
+        self.lbl.move(450,100)
 
         self.setGeometry(300, 300, 550, 200)
         self.setWindowTitle('Auto Pic')
@@ -68,12 +85,16 @@ class ExampleWidget(QWidget):
         self.show()
  
     def onTimeBetweenChanged(self, num):
-        self.time_between_pics = num
+        if num == '':
+            self.time_between_pics = 1
+        else:
+            self.time_between_pics = num
 
     def onStartTimeChanged(self, num):
-        if type(self.start_time) == type('') or self.start_time < 0:
+        if num == '' or self.start_time < 0:
             self.start_time = 0
-        self.start_time = int(num)
+        else:
+            self.start_time = num
 
     def btn_select_input_file(self):
         if self.inPath == '':
@@ -92,48 +113,49 @@ class ExampleWidget(QWidget):
             with open(APP_PATH+'app_settings.json', 'w') as f:
                 dump(dic, f, indent=4)
     
-    def btn_take_pics(self): # This is for the gui to stay responsive not a speed optimization
-        t1 = threading.Thread(target=self.takePictures)
-        t1.start()
-
-    def takePictures(self):
+    def mk_pic_thread(self): # This is for the gui to stay responsive not a speed optimization
         if self.inPath != None:
-            # setup
             self.qlp.show()
-            
-            cap = cv2.VideoCapture(self.inPath)
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            duration = frame_count/fps
-            
-            picFolderPath = os.path.join(os.path.dirname(self.inPath), self.outFolderName)
-            os.makedirs(picFolderPath, exist_ok=True)
+            vars = {
+                'inputPath':self.inPath, 
+                'outputFolderName':self.outFolderName,
+                'startTime' : self.start_time,
+                'endTime' : self.end_time,
+                'seccondsInterval' : self.time_between_pics
+            }
+            t1 = threading.Thread(target=self.takePictures, kwargs=vars)
+            t1.start()
+            self.qlp.setText('Working')
 
-            if self.end_time == '' or int(self.end_time) > duration or int(self.end_time)*-1 > duration:
-                self.end_time = duration
-            
-            if int(self.end_time) <= 0:
-                self.end_time = duration + int(self.end_time)
-            
-            start_frame = round(fps * self.start_time)
-            stop_frame = round(fps * self.end_time)
-            step_frame = round(fps * self.time_between_pics)
+    @staticmethod
+    def takePictures(inputPath, outputFolderName, startTime, endTime, seccondsInterval):
+        cap = cv2.VideoCapture(inputPath)
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        duration = frame_count/fps
+        
+        picFolderPath = os.path.join(os.path.dirname(inputPath), outputFolderName)
+        os.makedirs(picFolderPath, exist_ok=True)
 
-            # main
-            f_n = 0
-            for n in range(start_frame, stop_frame, step_frame):
-                cap.set(cv2.CAP_PROP_POS_FRAMES, n)
-                ret, frame = cap.read()
-                cv2.imwrite(f'{picFolderPath}/{n}.jpeg', frame)
-                w = (stop_frame-start_frame) / step_frame
-                
-                f_n+=1
-                total_frames = int((stop_frame - start_frame) / step_frame)
-                
-                self.qlp.setText(f'{f_n} / {total_frames}')
-            self.qlp.hide()            
-                
-if __name__ == '__main__':
-    app = QApplication(argv)
-    t = ExampleWidget()
-    exit(app.exec())
+        if endTime == '' or int(endTime) > duration or int(endTime)*-1 > duration:
+            endTime = duration
+        
+        if int(endTime) <= 0:
+            endTime = duration + int(endTime)
+        
+        start_frame = round(fps * float(startTime))
+        stop_frame = round(fps * float(endTime))
+        step_frame = round(fps * float(seccondsInterval))
+        
+        for n in range(start_frame, stop_frame, step_frame):
+            cap.set(cv2.CAP_PROP_POS_FRAMES, n)
+            ret, frame = cap.read()
+            cv2.imwrite(f'{picFolderPath}/{n}.jpeg', frame)
+        
+    def custom_excepthook(self, exc_type, exc_value, exc_traceback):
+        traceback.print_exception(exc_type, exc_value, exc_traceback)
+        QMessageBox.critical(self, 'ERROR', ''.join(traceback.format_exception(exc_value)))
+
+app = QApplication(argv)
+t = MainWindow()
+exit(app.exec())  
