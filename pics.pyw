@@ -1,9 +1,10 @@
-from PyQt6.QtWidgets import QFileDialog,QApplication, QPushButton, QLabel, QWidget, QMessageBox
+from PyQt6.QtWidgets import QFileDialog,QApplication, QPushButton, QLabel, QWidget, QMessageBox, QGridLayout
 from PyQt6.QtGui import QPixmap, QIcon
 from sys import exit, argv
 from json import dump, load
 import threading, cv2, os, ctypes, traceback, sys
 from classes.MyLineEdit import MyLineEdit
+from PyQt6.QtCore import Qt
 
 APP_PATH = os.path.dirname(os.path.realpath(__file__)) + '/'
 
@@ -29,40 +30,39 @@ class MainWindow(QWidget):
         self.initUI()
         
     def initUI(self):
-        self.btn_in = QPushButton('In File', self)
-        self.btn_in.move(20, 20)
-        self.btn_in.clicked.connect(self.btn_select_input_file)
-        self.la_in = QLabel(self.inPath + ' '*100, self)
-        self.la_in.move(100, 22)
+        layout = QGridLayout()
+        
+        self.input_label = QLabel(self.inPath, self)
+        self.input_button = QPushButton('In File', self)
+        self.input_button.clicked.connect(self.btn_select_input_file)
+        layout.addWidget(self.input_label,0,1)
+        layout.addWidget(self.input_button,0,0)
 
-        self.qle = MyLineEdit(str(self.time_between_pics), self)
-        self.ql = QLabel('Time Between:', self)
-        self.ql.move(20, 100)
-        self.qle.setGeometry(110,98,40,20)
-        self.qle.textChanged[str].connect(self.onTimeBetweenChanged)
 
-        self.qle2 = MyLineEdit(str(self.start_time), self)
-        self.ql2 = QLabel('Start Time:', self)
-        self.ql2.move(170, 100)
-        self.qle2.setGeometry(230,98,50,20)
-        self.qle2.textChanged[str].connect(self.onStartTimeChanged)
+        self.interval_label = QLabel('Time Between:', self)
+        self.interval_line_edit = MyLineEdit(str(self.time_between_pics), self)        
+        self.interval_line_edit.textChanged[str].connect(self.onTimeBetweenChanged)
+        layout.addWidget(self.interval_label,1,0)
+        layout.addWidget(self.interval_line_edit,1,1)
 
-        self.btn_pic = QPushButton('Take Pictures', self)
-        self.btn_pic.move(20, 150)
-        self.btn_pic.clicked.connect(self.mk_pic_thread)
- 
-        self.qlp = QLabel('progress:', self)
-        self.qlp.move(100, 150)
-        self.qlp.hide()
+        self.start_label = QLabel('Start Time:', self)
+        self.start_line_edit = MyLineEdit(str(self.start_time), self)
+        self.start_line_edit.textChanged[str].connect(self.onStartTimeChanged)
+        layout.addWidget(self.start_label,2,0)
+        layout.addWidget(self.start_line_edit,2,1)
 
-        self.pixmap = QPixmap(APP_PATH+'assets/frog.png')
-        self.lbl = QLabel(self)
-        self.lbl.setPixmap(self.pixmap)
-        self.lbl.move(450,100)
+        self.pic_button = QPushButton('Take Pictures', self)
+        self.pic_button.clicked.connect(self.mk_pic_thread)
+        layout.addWidget(self.pic_button,3,0)
 
-        self.setGeometry(300, 300, 550, 200)
+        self.frog_pic = QLabel(self)
+        self.frog_pic.setPixmap(QPixmap(APP_PATH+'assets/frog.png'))
+        layout.addWidget(self.frog_pic,3,1)
+        self.frog_pic.setAlignment(Qt.AlignmentFlag.AlignRight)
+
         self.setWindowTitle('Auto Pic')
         self.setWindowIcon(QIcon(APP_PATH+"assets/dolphin.ico"))
+        self.setLayout(layout)
         self.show()
  
     def onTimeBetweenChanged(self, num):
@@ -83,7 +83,7 @@ class MainWindow(QWidget):
         fname = QFileDialog.getOpenFileName(self, 'Open file', self.inPath)
         if fname[0]: # so if you cancel the dialog code doesn't run
             self.inPath = fname[0]
-            self.la_in.setText(str(self.inPath))
+            self.input_label.setText(str(self.inPath))
 
             # saving file path selection for next opening of file dialog
             with open(APP_PATH+"app_settings.json", "r") as f:
@@ -96,7 +96,6 @@ class MainWindow(QWidget):
     
     def mk_pic_thread(self): # This is for the gui to stay responsive not a speed optimization
         if self.inPath != None:
-            self.qlp.show()
             vars = {
                 'inputPath':self.inPath, 
                 'outputFolderName':self.outFolderName,
@@ -106,7 +105,6 @@ class MainWindow(QWidget):
             }
             t1 = threading.Thread(target=self.takePictures, kwargs=vars)
             t1.start()
-            self.qlp.setText('Working')
 
     @staticmethod
     def takePictures(inputPath, outputFolderName, startTime, endTime, seccondsInterval):
