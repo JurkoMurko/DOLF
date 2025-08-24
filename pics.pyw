@@ -1,30 +1,11 @@
-from PyQt6.QtWidgets import (QFileDialog, QDialog,QApplication, QPushButton, QLabel, QWidget, QLineEdit, QMessageBox)
+from PyQt6.QtWidgets import QFileDialog,QApplication, QPushButton, QLabel, QWidget, QMessageBox
 from PyQt6.QtGui import QPixmap, QIcon
 from sys import exit, argv
 from json import dump, load
 import threading, cv2, os, ctypes, traceback, sys
+from classes.MyLineEdit import MyLineEdit
 
 APP_PATH = os.path.dirname(os.path.realpath(__file__)) + '/'
-
-class ErrorDialog(QDialog):
-    def __init__(self):
-        super().__init__()
-        
-        self.initUI()
-        
-    def initUI(self):
-        self.qlp = QLabel('Error:', self)
-        self.qlp.move(100, 150)
-
-        pixmap = QPixmap(APP_PATH+'assets/frog.png')
-        lbl = QLabel(self)
-        lbl.setPixmap(pixmap)
-        lbl.move(450,100)
-
-        self.setGeometry(350, 350, 200, 200)
-        self.setWindowTitle('Error')
-        self.setWindowIcon(QIcon(APP_PATH+"assets/dolphin.ico"))
-        self.show()
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -54,13 +35,13 @@ class MainWindow(QWidget):
         self.la_in = QLabel(self.inPath + ' '*100, self)
         self.la_in.move(100, 22)
 
-        self.qle = QLineEdit(str(self.time_between_pics), self)
+        self.qle = MyLineEdit(str(self.time_between_pics), self)
         self.ql = QLabel('Time Between:', self)
         self.ql.move(20, 100)
         self.qle.setGeometry(110,98,40,20)
         self.qle.textChanged[str].connect(self.onTimeBetweenChanged)
 
-        self.qle2 = QLineEdit(str(self.start_time), self)
+        self.qle2 = MyLineEdit(str(self.start_time), self)
         self.ql2 = QLabel('Start Time:', self)
         self.ql2.move(170, 100)
         self.qle2.setGeometry(230,98,50,20)
@@ -68,7 +49,7 @@ class MainWindow(QWidget):
 
         self.btn_pic = QPushButton('Take Pictures', self)
         self.btn_pic.move(20, 150)
-        self.btn_pic.clicked.connect(self.mk_pic_thread) # lambda function mb
+        self.btn_pic.clicked.connect(self.mk_pic_thread)
  
         self.qlp = QLabel('progress:', self)
         self.qlp.move(100, 150)
