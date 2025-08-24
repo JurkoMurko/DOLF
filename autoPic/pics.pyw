@@ -26,16 +26,12 @@ class ErrorDialog(QDialog):
         self.setWindowIcon(QIcon(APP_PATH+"Icon-Cute-Dolphin.ico"))
         self.show()
 
-class ExampleWidget(QWidget):
+class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         
-        # Assign the custom function to sys.excepthook
-        sys.excepthook = self.custom_excepthook
-        threading.excepthook = self.custom_thread_excepthook
-
-        myappid = 'DOLF.automatic_pictures.v5' # arbitrary string
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid) # sets Windows task bar icon
+        sys.excepthook = self.custom_excepthook # Assign the custom function to sys.excepthook
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('DOLF.automatic_pictures.v5') # sets Windows task bar icon
     
         self.time_between_pics = 1
         self.start_time = 35
@@ -72,7 +68,7 @@ class ExampleWidget(QWidget):
 
         self.btn_pic = QPushButton('Take Pictures', self)
         self.btn_pic.move(20, 150)
-        self.btn_pic.clicked.connect(self.mk_pic_thread) #(self.mk_pic_thread) # lambda function could be cleaner
+        self.btn_pic.clicked.connect(self.mk_pic_thread) # lambda function mb
  
         self.qlp = QLabel('progress:', self)
         self.qlp.move(100, 150)
@@ -89,12 +85,16 @@ class ExampleWidget(QWidget):
         self.show()
  
     def onTimeBetweenChanged(self, num):
-        self.time_between_pics = num
+        if num == '':
+            self.time_between_pics = 1
+        else:
+            self.time_between_pics = num
 
     def onStartTimeChanged(self, num):
-        if type(self.start_time) == type('') or self.start_time < 0:
+        if num == '' or self.start_time < 0:
             self.start_time = 0
-        self.start_time = int(num)
+        else:
+            self.start_time = num
 
     def btn_select_input_file(self):
         if self.inPath == '':
@@ -123,14 +123,12 @@ class ExampleWidget(QWidget):
                 'endTime' : self.end_time,
                 'seccondsInterval' : self.time_between_pics
             }
-            t1 = MyThread(target=self.takePictures, kwargs=vars)
+            t1 = threading.Thread(target=self.takePictures, kwargs=vars)
             t1.start()
             self.qlp.setText('Working')
 
     @staticmethod
     def takePictures(inputPath, outputFolderName, startTime, endTime, seccondsInterval):
-        import test
-        pass
         cap = cv2.VideoCapture(inputPath)
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -145,36 +143,19 @@ class ExampleWidget(QWidget):
         if int(endTime) <= 0:
             endTime = duration + int(endTime)
         
-        start_frame = round(fps * startTime)
-        stop_frame = round(fps * endTime)
-        step_frame = round(fps * seccondsInterval)
+        start_frame = round(fps * float(startTime))
+        stop_frame = round(fps * float(endTime))
+        step_frame = round(fps * float(seccondsInterval))
         
         for n in range(start_frame, stop_frame, step_frame):
             cap.set(cv2.CAP_PROP_POS_FRAMES, n)
             ret, frame = cap.read()
             cv2.imwrite(f'{picFolderPath}/{n}.jpeg', frame)
-    
-    @staticmethod
-    def custom_thread_excepthook(exc):
-        traceback.print_exception(exc.exc_type, exc.exc_value, exc.exc_traceback)
-        w = QWidget()
-        msg = QLabel(''.join(traceback.format_exception(exc.exc_value)), w)
         
     def custom_excepthook(self, exc_type, exc_value, exc_traceback):
         traceback.print_exception(exc_type, exc_value, exc_traceback)
         QMessageBox.critical(self, 'ERROR', ''.join(traceback.format_exception(exc_value)))
-        
-class MyThread(threading.Thread):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.exception = None
-
-    def run(self):
-        try:
-            super().run()
-        except Exception as e:
-            self.exception = e
 
 app = QApplication(argv)
-t = ExampleWidget()
+t = MainWindow()
 exit(app.exec())  
