@@ -20,4 +20,5 @@
 
 - [x] When you click to change the start time in the GUI it should auto select the whole number in blue.
 - [] WARNING when you have old files with the same name as what will be generated and run the program they will overwire the old files.
--[] make it look pretty
+- [] make it look pretty
+- [] add case where if defult input file is not found it goes to whatever
