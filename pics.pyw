@@ -1,12 +1,22 @@
-from PyQt6.QtWidgets import QFileDialog,QApplication, QPushButton, QLabel, QWidget, QMessageBox, QGridLayout
+from PyQt6.QtWidgets import QFileDialog,QApplication, QPushButton, QLabel, QWidget, QMessageBox, QGridLayout, QLineEdit
 from PyQt6.QtGui import QPixmap, QIcon
 from sys import exit, argv
 from json import dump, load
 import threading, cv2, os, ctypes, traceback, sys
-from classes.MyLineEdit import MyLineEdit
+# from classes.MyLineEdit import MyLineEdit
 from PyQt6.QtCore import Qt
 
 APP_PATH = os.path.dirname(os.path.realpath(__file__)) + '/'
+
+class MyLineEdit(QLineEdit):
+    def __init__(self, str, parent):
+        super().__init__(str, parent)
+    
+    def mousePressEvent(self, event):
+        already_select_all = self.text() == self.selectedText()
+        super().mousePressEvent(event)
+        if not already_select_all:
+            self.selectAll()
 
 class MainWindow(QWidget):
     def __init__(self):
