@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QFileDialog,QApplication, QPushButton, QLabel, QWidg
 from PyQt6.QtGui import QPixmap, QIcon
 from sys import exit, argv
 from json import dump, load
-import threading, cv2, os, ctypes, traceback, sys
+import threading, cv2, os, ctypes, traceback, sys, platform
 # from classes.MyLineEdit import MyLineEdit
 from PyQt6.QtCore import Qt
 
@@ -21,9 +21,9 @@ class MyLineEdit(QLineEdit):
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        
-        sys.excepthook = self.custom_excepthook # Assign the custom function to sys.excepthook
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('DOLF.automatic_pictures.v5') # sets Windows task bar icon
+        if platform.system() == "Windows":
+            sys.excepthook = self.custom_excepthook # Assign the custom function to sys.excepthook
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('DOLF.automatic_pictures.v5') # sets Windows task bar icon
     
         self.time_between_pics = 1
         self.start_time = 35
