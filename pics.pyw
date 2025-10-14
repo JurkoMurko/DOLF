@@ -21,6 +21,7 @@ class MyLineEdit(QLineEdit):
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
+
         if platform.system() == "Windows":
             sys.excepthook = self.custom_excepthook # Assign the custom function to sys.excepthook
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('DOLF.automatic_pictures.v5') # sets Windows task bar icon
@@ -42,29 +43,35 @@ class MainWindow(QWidget):
     def initUI(self):
         layout = QGridLayout()
         
+        # Input File
         self.input_label = QLabel(self.inPath, self)
         self.input_button = QPushButton('In File', self)
         self.input_button.clicked.connect(self.btn_select_input_file)
         layout.addWidget(self.input_label,0,1)
         layout.addWidget(self.input_button,0,0)
 
-
+        # Interval Input
         self.interval_label = QLabel('Time Between:', self)
-        self.interval_line_edit = MyLineEdit(str(self.time_between_pics), self)        
+        self.interval_line_edit = MyLineEdit('1.0',self)   
+        self.interval_line_edit.setInputMask('0.0')
         self.interval_line_edit.textChanged[str].connect(self.onTimeBetweenChanged)
         layout.addWidget(self.interval_label,1,0)
         layout.addWidget(self.interval_line_edit,1,1)
 
+        # Start Time Input
         self.start_label = QLabel('Start Time:', self)
-        self.start_line_edit = MyLineEdit(str(self.start_time), self)
+        self.start_line_edit = MyLineEdit('35.0', self)
+        self.start_line_edit.setInputMask('000.0')
         self.start_line_edit.textChanged[str].connect(self.onStartTimeChanged)
         layout.addWidget(self.start_label,2,0)
         layout.addWidget(self.start_line_edit,2,1)
 
+        # Run Button
         self.pic_button = QPushButton('Take Pictures', self)
         self.pic_button.clicked.connect(self.mk_pic_thread)
         layout.addWidget(self.pic_button,3,0)
 
+        # Frog Pic
         self.frog_pic = QLabel(self)
         self.frog_pic.setPixmap(QPixmap(APP_PATH+'assets/frog.png'))
         layout.addWidget(self.frog_pic,3,1)
@@ -75,17 +82,11 @@ class MainWindow(QWidget):
         self.setLayout(layout)
         self.show()
  
-    def onTimeBetweenChanged(self, num):
-        if num == '':
-            self.time_between_pics = 1
-        else:
-            self.time_between_pics = num
+    def onTimeBetweenChanged(self, idk):
+        self.time_between_pics = float(self.interval_line_edit.text())
 
-    def onStartTimeChanged(self, num):
-        if num == '' or self.start_time < 0:
-            self.start_time = 0
-        else:
-            self.start_time = num
+    def onStartTimeChanged(self, idk):
+        self.start_time = float(self.start_line_edit.text())
 
     def btn_select_input_file(self):
         if self.inPath == '':
