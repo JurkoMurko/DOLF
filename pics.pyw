@@ -33,9 +33,9 @@ class MainWindow(QWidget):
         with open(APP_PATH+"app_settings.json", "r") as f: # you shouldn't have to edit a json
             dic = load(f)
             self.inPath = dic['input']
-            self.inPath = dic['input']
             self.start_time = dic['start time']
             self.end_time = dic['end time']
+            self.time_between_pics = dic['interval']
             self.outFolderName = dic['defult picture folder name']
 
         self.initUI()
@@ -104,18 +104,32 @@ class MainWindow(QWidget):
                 
             with open(APP_PATH+'app_settings.json', 'w') as f:
                 dump(dic, f, indent=4)
-    
+                
     def mk_pic_thread(self): # This is for the gui to stay responsive not a speed optimization
-        if self.inPath != None:
-            vars = {
-                'inputPath':self.inPath, 
-                'outputFolderName':self.outFolderName,
-                'startTime' : self.start_time,
-                'endTime' : self.end_time,
-                'seccondsInterval' : self.time_between_pics
-            }
-            t1 = threading.Thread(target=self.takePictures, kwargs=vars)
-            t1.start()
+        if self.inPath == '':
+            raise FileExistsError("Input File Not Selected")
+        
+        # handels conflicting folder names
+        i = 2
+        out_dir_path = os.path.join(os.path.dirname(self.inPath), self.outFolderName) # For example C:/urs/fotky2
+        output_dir_defult_name = out_dir_path # For example C:/usr/fotky
+        while os.path.isdir(out_dir_path):
+            if i < 100: # max for the while loop
+                out_dir_path = output_dir_defult_name + f'{i}'
+                # output_folder_path = trial_folder_name
+                i += 1
+            else:
+                raise Exception("Tried >100 folder names. Folder with defult name already exists")
+        
+        vars = {
+            'inputPath':self.inPath, 
+            'outputFolderName':out_dir_path,
+            'startTime' : self.start_time,
+            'endTime' : self.end_time,
+            'seccondsInterval' : self.time_between_pics
+        }
+        t1 = threading.Thread(target=self.takePictures, kwargs=vars)
+        t1.start()
 
     @staticmethod
     def takePictures(inputPath, outputFolderName, startTime, endTime, seccondsInterval):
@@ -124,21 +138,21 @@ class MainWindow(QWidget):
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         duration = frame_count/fps
         
-        picFolderPath = os.path.join(os.path.dirname(inputPath), outputFolderName)
-        os.makedirs(picFolderPath, exist_ok=True)
+        picFolderPath = os.path.join(os.path.dirname(inputPath), outputFolderName) # copy
+        os.makedirs(picFolderPath)
 
-        if endTime == '' or int(endTime) > duration or int(endTime)*-1 > duration:
+        if endTime == '' or float(endTime) > duration or float(endTime)*-1 > duration:
             endTime = duration
         
-        if int(endTime) <= 0:
-            endTime = duration + int(endTime)
+        if float(endTime) <= 0:
+            endTime = duration + float(endTime)
         
         start_frame = round(fps * float(startTime))
         stop_frame = round(fps * float(endTime))
         step_frame = round(fps * float(seccondsInterval))
         
         for n in range(start_frame, stop_frame, step_frame):
-            cap.set(cv2.CAP_PROP_POS_FRAMES, n)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, n) # doesn't get correct frame ex: says frame 9030 but got frame 9664; this is why end time is broken
             ret, frame = cap.read()
             cv2.imwrite(f'{picFolderPath}/{n}.jpeg', frame)
         
