@@ -1,5 +1,21 @@
-from PyQt6.QtWidgets import QFileDialog,QApplication, QPushButton, QLabel, QWidget, QMessageBox, QGridLayout, QLineEdit
+from PyQt6.QtWidgets import (
+    QFileDialog,
+    QApplication, 
+    QPushButton, 
+    QLabel, 
+    QWidget, 
+    QMessageBox, 
+    QGridLayout, 
+    QLineEdit
+    )
 from PyQt6.QtGui import QPixmap, QIcon
+from PyQt6.QtCore import (
+    QObject,
+    QRunnable,
+    QThreadPool,
+    pyqtSignal,
+    pyqtSlot,
+)
 from sys import exit, argv
 from json import dump, load
 import threading, cv2, os, ctypes, traceback, sys, platform
@@ -18,26 +34,52 @@ class MyLineEdit(QLineEdit):
         if not already_select_all:
             self.selectAll()
 
+class Worker(QRunnable):
+    def __init__(self, fn, *args, **kwargs):
+        super().__init__()
+        self.fn = fn
+        self.args = args # Arguments to pass to the callback function
+        self.kwargs = kwargs # Keywords to pass to the callback function
+        self.signals = WorkerSignals()
+        self.kwargs["progress_callback"] = self.signals.progress # Add the callback to our kwargs
+
+    @pyqtSlot()
+    def run(self):
+        try:
+            result = self.fn(*self.args, **self.kwargs)
+        except Exception:
+            exctype, value, tb = sys.exc_info()
+            self.signals.error.emit(exctype, value, tb)
+        finally:
+            self.signals.finished.emit()
+
+class WorkerSignals(QObject):
+    finished = pyqtSignal()
+    error = pyqtSignal(object,object,object) 
+    progress = pyqtSignal(tuple)
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-
+        
+        sys.excepthook = self.custom_excepthook
+        
         if platform.system() == "Windows":
-            sys.excepthook = self.custom_excepthook # Assign the custom function to sys.excepthook
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('DOLF.automatic_pictures.v5') # sets Windows task bar icon
     
-        self.time_between_pics = 1
-        self.start_time = 35
-        self.end_time = ''
-        
-        with open(APP_PATH+"app_settings.json", "r") as f: # you shouldn't have to edit a json
+        with open(APP_PATH+"app_settings.json", "r") as f:
             dic = load(f)
             self.inPath = dic['input']
             self.start_time = dic['start time']
             self.end_time = dic['end time']
             self.time_between_pics = dic['interval']
             self.outFolderName = dic['defult picture folder name']
+        
+        # self.time_between_pics = 1
+        # self.start_time = 35
+        # self.end_time = ''
 
+        self.threadpool = QThreadPool()
         self.initUI()
         
     def initUI(self):
@@ -68,7 +110,7 @@ class MainWindow(QWidget):
 
         # Run Button
         self.pic_button = QPushButton('Take Pictures', self)
-        self.pic_button.clicked.connect(self.mk_pic_thread)
+        self.pic_button.clicked.connect(self.pyqt_tread)
         layout.addWidget(self.pic_button,3,0)
 
         # Frog Pic
@@ -90,7 +132,7 @@ class MainWindow(QWidget):
 
     def btn_select_input_file(self):
         if self.inPath == '':
-            self.inPath = os.path.expanduser('~') + '/Desktop' # opens file dialog at current home path + desktop
+            self.inPath = os.path.expanduser('~') + '/Desktop' 
         fname = QFileDialog.getOpenFileName(self, 'Open file', self.inPath)
         if fname[0]: # so if you cancel the dialog code doesn't run
             self.inPath = fname[0]
@@ -104,8 +146,17 @@ class MainWindow(QWidget):
                 
             with open(APP_PATH+'app_settings.json', 'w') as f:
                 dump(dic, f, indent=4)
-                
-    def mk_pic_thread(self): # This is for the gui to stay responsive not a speed optimization
+    
+    def progress_fn(self, n):
+        print(f'{n[0]}/{n[1]}')
+        
+    def thread_complete(self):
+        print('thread finnished')
+        
+    def print_output(self, s):
+        print(s)
+    
+    def pyqt_tread(self):
         if self.inPath == '':
             raise FileExistsError("Input File Not Selected")
         
@@ -116,23 +167,24 @@ class MainWindow(QWidget):
         while os.path.isdir(out_dir_path):
             if i < 100: # max for the while loop
                 out_dir_path = output_dir_defult_name + f'{i}'
-                # output_folder_path = trial_folder_name
                 i += 1
             else:
                 raise Exception("Tried >100 folder names. Folder with defult name already exists")
         
-        vars = {
-            'inputPath':self.inPath, 
-            'outputFolderName':out_dir_path,
-            'startTime' : self.start_time,
-            'endTime' : self.end_time,
-            'seccondsInterval' : self.time_between_pics
-        }
-        t1 = threading.Thread(target=self.takePictures, kwargs=vars)
-        t1.start()
+        worker = Worker(
+            self.takePictures,
+            inputPath = self.inPath, 
+            outputFolderName = out_dir_path,
+            startTime = self.start_time,
+            endTime = self.end_time,
+            seccondsInterval = self.time_between_pics
+        )
+        worker.signals.finished.connect(self.thread_complete)
+        worker.signals.progress.connect(self.progress_fn)
+        worker.signals.error.connect(self.custom_excepthook)
+        self.threadpool.start(worker)
 
-    @staticmethod
-    def takePictures(inputPath, outputFolderName, startTime, endTime, seccondsInterval):
+    def takePictures(self, inputPath, outputFolderName, startTime, endTime, seccondsInterval, progress_callback):
         cap = cv2.VideoCapture(inputPath)
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -147,15 +199,19 @@ class MainWindow(QWidget):
         if float(endTime) <= 0:
             endTime = duration + float(endTime)
         
+        # rounding might be where the small end time error comes from
         start_frame = round(fps * float(startTime))
         stop_frame = round(fps * float(endTime))
         step_frame = round(fps * float(seccondsInterval))
         
+        total_num_pics = ((stop_frame - start_frame) // step_frame) +1 #idk why +1
         for n in range(start_frame, stop_frame, step_frame):
-            cap.set(cv2.CAP_PROP_POS_FRAMES, n) # doesn't get correct frame ex: says frame 9030 but got frame 9664; this is why end time is broken
+            pic_num = int(n/step_frame) +1 # idk why int what about frame 1 w/ step 1
+            cap.set(cv2.CAP_PROP_POS_FRAMES, n) # says frame 9030 but got frame 9664; this is why end time is broken
             ret, frame = cap.read()
-            cv2.imwrite(f'{picFolderPath}/{n}.jpeg', frame)
-        
+            cv2.imwrite(f'{picFolderPath}/{pic_num}.jpeg', frame)
+            progress_callback.emit((pic_num, total_num_pics))
+            
     def custom_excepthook(self, exc_type, exc_value, exc_traceback):
         traceback.print_exception(exc_type, exc_value, exc_traceback)
         QMessageBox.critical(self, 'ERROR', ''.join(traceback.format_exception(exc_value)))

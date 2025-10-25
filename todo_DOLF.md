@@ -12,7 +12,7 @@
 - [x] layout thats not px based
 - [x] string error in input field
 - [] make it faster (10 videos might take an hour with 2 laptops; or about 1-.5 pictures made per second rn)
-- [] Error messages for errors in the thread (look into Qthread)
+- [x] Error messages for errors in the thread (look into Qthread)
 - [] mac installer
 
 ## TO-DO Later (nice to haves but not needs or priorities a.k.a. ideas that i probably shouldn't act on)
@@ -32,6 +32,6 @@
 - [x] 2 videos in the same folder over write eachother
 - [] start time cant be changed to 30 in the gui
 - [x] WARNING when you have old files with the same name as what will be generated and run the program they will overwire the old files.
-- [] if there is no input file, there is a error when you run take pictures
+- [x] if there is no input file, there is a unhandeled error when you run take pictures
 - [x] running take pictures with no input might crash
 - [] end time is out of sync
