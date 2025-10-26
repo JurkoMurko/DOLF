@@ -2,7 +2,7 @@
 
 ## Important
 
-- [] PROGRESS BAR! (feedback that its working)
+- [x] PROGRESS BAR! (feedback that its working)
 - [x] multithread
 - [x] change defult opening directory when you change directories
 - [x] Error messages/handeling (Only works for errors in the main loop not in the take pics thread)
@@ -27,8 +27,8 @@
 
 ## Bugs
 
-- [] open threads don't close when the program does
-- [] improperly closes program
+- [x] open threads don't close when the program does
+- [x] improperly closes program
 - [x] 2 videos in the same folder over write eachother
 - [] start time cant be changed to 30 in the gui
 - [x] WARNING when you have old files with the same name as what will be generated and run the program they will overwire the old files.
