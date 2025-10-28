@@ -3,4 +3,6 @@ old/*
 test.py
 md files/*
 *.pyc
-app_settings.json
+/dist
+/build
+git-filter-repo
