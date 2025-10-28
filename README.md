@@ -6,18 +6,19 @@ Note: This used to use FFMPEG which was faster but so some reason I could not fi
 
 This was a first time I had to make something for a non programmer to use so I learned a lot. My first gui, error handeling, user feadback, installation on other computers, "it works on my machine" types of problems. All 10/10 learning experiances.
 
-## Windows and MacOS installer
+## Installation
 
-I don't know how people share python projects where they create an installer on GitHub. So here are the instructions for how to build the project and installer yourself.
+You can either clone the project which is a far smaller download, but you will need to have python 3 installed. Otherwise you can download one of the released installers.
 
-I use pyinstaller to create an .exe file. It can be installed with pip.
+I used pyinstaller to turn my .py file into an .exe file. InstallForge was used to create the windows installer from the .exe file.
 
-To use my settings run:
+## Features
 
-```pyinstall pics.spec```
-
-Your executable will be in the dist folder that is generated.
-
-I used install forge to generate an installer for windows.
-
-Note: I don't remember how I used Install Forge so please google it you smart little cookie
+- get pictures from any video file
+- start time, end time, and interval for selecting which frames you want.
+- GUI
+- process multiple videos at once
+- progress "bar"
+- saving settings
+- error dialogs
+- ...and a lot of little things you'll never notice unless they were missing <3
