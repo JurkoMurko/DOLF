@@ -21,3 +21,11 @@ Your executable will be in the dist folder that is generated.
 I used install forge to generate an installer for windows.
 
 Note: I don't remember how I used Install Forge so please google it you smart little cookie
+
+## Features
+- get pictures from any video file
+- start time, end time, and interval for selecting which frames you want.
+- GUI
+- run multiple videos at once
+- progress "bar"
+- ...and a lot of little things you'll never notice unless they were missing <3
