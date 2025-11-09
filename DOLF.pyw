@@ -20,8 +20,8 @@ from PyQt6.QtCore import (
 from json import dump, load
 import cv2, os, ctypes, traceback, platform, uuid, sys
 
-APP_PATH = os.path.dirname(os.path.realpath(__file__)) + '/'
-SETTINGS_PATH = APP_PATH + "app_settings.json"
+APP_PATH = os.path.dirname(os.path.realpath(__file__))
+SETTINGS_PATH = os.path.join(APP_PATH, "app_settings.json")
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -93,7 +93,7 @@ class MainWindow(QWidget):
 
         # Frog Pic
         self.frog_pic = QLabel(self)
-        self.frog_pic.setPixmap(QPixmap(APP_PATH+'assets/frog.png'))
+        self.frog_pic.setPixmap(QPixmap(os.path.join(APP_PATH,'assets/frog.png')))
         self.layout.addWidget(self.frog_pic,3,1)
         self.frog_pic.setAlignment(Qt.AlignmentFlag.AlignRight)
 
@@ -101,7 +101,7 @@ class MainWindow(QWidget):
         self.thread_list={}
         
         self.setWindowTitle('DOLF')
-        self.setWindowIcon(QIcon(APP_PATH+"assets/dolphin.ico"))
+        self.setWindowIcon(QIcon(os.path.join(APP_PATH,"assets/dolphin.ico")))
         self.setLayout(self.layout)
         self.show()
 
@@ -171,7 +171,7 @@ class MainWindow(QWidget):
         input_file_name = os.path.basename(input_file_path)
         output_folder_path = os.path.join(input_file_directory, output_folder_name)
         
-        # auto create folder if file name conflicts
+        # auto create folder if folder name conflicts
         for i in range(2,101):
             if os.path.isdir(output_folder_path):
                 output_folder_path = os.path.join(input_file_directory, output_folder_name) + str(i)
@@ -251,6 +251,7 @@ class WorkerSignals(QObject):
     error = pyqtSignal(object,object,object) 
     progress = pyqtSignal(uuid.UUID, tuple)
 
-app = QApplication(sys.argv)
-t = MainWindow()
-sys.exit(app.exec())  
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    t = MainWindow()
+    sys.exit(app.exec())  
