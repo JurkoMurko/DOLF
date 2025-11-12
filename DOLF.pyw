@@ -141,7 +141,7 @@ class MainWindow(QWidget):
             self.takePictures,
             thread_id = thread_id,
             input_file_path = self.input_file_path, 
-            output_folder_name = self.output_folder_name,
+            output_folder_path = self.createUniqueFolder(os.path.dirname(self.input_file_path)),
             start_time = self.start_time,
             end_time = self.end_time,
             time_between_pics = self.time_between_pics
@@ -161,26 +161,11 @@ class MainWindow(QWidget):
         worker.signals.error.connect(self.custom_excepthook)
         self.threadpool.start(worker)
 
-    def takePictures(self, thread_id, input_file_path, output_folder_name, start_time, end_time, time_between_pics, progress_callback):
+    def takePictures(self, thread_id, input_file_path, output_folder_path, start_time, end_time, time_between_pics, progress_callback):        
         cap = cv2.VideoCapture(input_file_path)
         fps = cap.get(cv2.CAP_PROP_FPS)
         frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
         duration = frame_count/fps
-        
-        input_file_directory = os.path.dirname(input_file_path)
-        input_file_name = os.path.basename(input_file_path)
-        output_folder_path = os.path.join(input_file_directory, output_folder_name)
-        
-        # auto create folder if folder name conflicts
-        for i in range(2,101):
-            if os.path.isdir(output_folder_path):
-                output_folder_path = os.path.join(input_file_directory, output_folder_name) + str(i)
-            else:
-                break
-            if i == 100:
-                raise Exception("Tried >100 folder names. Folder with defult name already exists")
-        
-        os.makedirs(output_folder_path)
 
         if end_time > duration or end_time * -1 > duration or end_time == -1:
             end_time = duration
@@ -199,7 +184,22 @@ class MainWindow(QWidget):
             cv2.imwrite(f'{output_folder_path}/{pic_num}.jpeg', frame)
             progress_callback.emit(thread_id, (pic_num, total_num_pics))
     
-    def closeEvent(self, event):
+    def createUniqueFolder (self, parent_directory):
+        output_folder_path = os.path.join(parent_directory, self.output_folder_name)
+        
+        # auto create folder if folder name conflicts
+        for i in range(2,101):
+            if os.path.isdir(output_folder_path):
+                output_folder_path = os.path.join(parent_directory, self.output_folder_name) + str(i)
+            else:
+                break
+            if i == 100:
+                raise Exception("Tried >100 folder names. Folder with defult name already exists")
+        
+        os.makedirs(output_folder_path)
+        return output_folder_path
+
+    def closeEvent(self, event): # special named function that runs when the gui closes
         # saving settings for next opening
         with open(SETTINGS_PATH, "a+") as f:
             f.seek(0) # set cursor at files start becuase we are in open's append mode
