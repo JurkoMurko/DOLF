@@ -14,14 +14,18 @@
 - [] make it faster (10 videos might take an hour with 2 laptops; or about 1-.5 pictures made per second rn)
 - [x] Error messages for errors in the thread (look into Qthread)
 - [] mac installer
+- [] add unit tests
+- [] add logging of errors
+- [] make installer smaller
+- [] auto check for updates from client side
+
 
 ## TO-DO Later (nice to haves but not needs or priorities a.k.a. ideas that i probably shouldn't act on)
 
 - [x] When you click to change the start time in the GUI it should auto select the whole number in blue.
 - [x] make it look pretty
-- [] does making the imports more specific make the final file size smaller?
-- [] settings menu to replace directly editing json file
-- [] add tests
+- [x] does making the imports more specific make the final file size smaller?
+- [x] settings menu to replace directly editing json file (removed interaction with json settings file)
 - [x] consistent var names like _ vs cammelCase
 - [x] consistent names outFolderName vs outputFolderName
 - [x] working with paths is not organized
