@@ -32,7 +32,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='assets/dolphin.ico'
 )
 coll = COLLECT(
     exe,
@@ -41,5 +40,11 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='dolf',
+    name='DOLF',
+)
+app = BUNDLE(
+    coll,
+    name='dolf.app',
+    icon='assets/dolphin.icns',
+    bundle_identifier=None,
 )

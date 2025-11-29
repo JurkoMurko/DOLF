@@ -1,0 +1,13 @@
+the create dmg command to create a working dmg
+
+create-dmg \
+  --volname "DOLF" \
+  --volicon "assets/dolphin.icns" \
+  --background "assets/installer_background.png" \
+  --window-pos 0 0 \
+  --window-size 600 300 \
+  --icon "dolf.app" 150 150 \
+  --icon-size 100 \
+  --app-drop-link 450 150 \
+  "Dolf-Installer-v0.1.1-Mac.dmg" \
+  "dist/dolf.app"

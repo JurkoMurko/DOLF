@@ -4,5 +4,5 @@ test.py
 md files/*
 *.pyc
 /dist
-/build
 git-filter-repo
+.DS_Store

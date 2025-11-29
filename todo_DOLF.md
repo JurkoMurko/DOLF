@@ -13,10 +13,10 @@
 - [x] string error in input field
 - [] make it faster (10 videos might take an hour with 2 laptops; or about 1-.5 pictures made per second rn)
 - [x] Error messages for errors in the thread (look into Qthread)
-- [] mac installer
+- [x] mac installer
 - [] add unit tests
 - [] add logging of errors
-- [] make installer smaller
+- [x] make installer smaller
 - [] auto check for updates from client side
 
 ## TO-DO Later (nice to haves but not needs or priorities a.k.a. ideas that i probably shouldn't act on)
